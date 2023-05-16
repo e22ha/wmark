@@ -1,12 +1,21 @@
-from PIL import Image
-import cv2
+from PIL import Image, ExifTags
 import argparse
 import os
 import time
 import json
 from pathlib import Path
-import numpy as np
 
+
+def get_image_orientation_tag(image):
+    try:
+        exif_data = image.getexif()
+        if exif_data is not None:
+            for tag, value in exif_data.items():
+                if tag in ExifTags.TAGS and ExifTags.TAGS[tag] == 'Orientation':
+                    return value
+    except AttributeError:
+        pass
+    return 1
 
 
 def process_images(directory, watermark_filename, dpi, quality):
@@ -23,16 +32,16 @@ def process_images(directory, watermark_filename, dpi, quality):
     watermark = Image.open(watermark_filename)
     watermark.load()
 
-
     for filename in onlyfiles:
         file_path = Path(directory) / filename
         if file_path.suffix.lower() in ['.jpg', '.jpeg', '.png']:
             with Image.open(file_path) as image:
                 image.load()
-                cv_image = cv2.imdecode(np.fromfile(str(file_path), dtype=np.uint8), cv2.IMREAD_UNCHANGED)
 
-                if (cv_image.shape[1], cv_image.shape[0]) != image.size:
-                    image = image.transpose(Image.ROTATE_90)
+                # Get image orientation
+                orientation_tag = get_image_orientation_tag(image)
+                if orientation_tag in [3, 6, 8]:
+                    image = image.transpose(Image.ROTATE_270 if orientation_tag == 8 else Image.ROTATE_90)
                     fixed_width = int(image.width * 0.5)
                 else:
                     fixed_width = int(image.width * 0.3)
@@ -67,7 +76,7 @@ if __name__ == '__main__':
 
     directory = args.path
 
-    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'watermarks.json')) as file:
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/watermarks.json')) as file:
         watermarks = json.load(file)
 
     watermark_filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), watermarks[args.watermark])
