@@ -4,3 +4,4 @@ dist/
 venv/
 С ЛОГО/
 wmark.spec
+.fleet/

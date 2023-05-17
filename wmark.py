@@ -4,6 +4,8 @@ import os
 import time
 import json
 from pathlib import Path
+from tqdm import tqdm
+
 
 
 def get_image_orientation_tag(image):
@@ -21,13 +23,23 @@ def get_image_orientation_tag(image):
 def process_images(directory, watermark_filename, dpi, quality):
     start_time = time.time()
 
+    image_extensions = ['.jpg', '.jpeg', '.png', '.gif']
+    path = Path(directory)
+    onlyfiles = [file.name for file in path.iterdir() if file.is_file() and file.suffix.lower() in image_extensions]
+
+    if len(onlyfiles) == 0:
+        print("--- Folder is empty ---")
+        return
+
+    print("Count files: %s" % len(onlyfiles))
+
+    progress_bar = tqdm(total=len(onlyfiles))
+
     result_path = os.path.join(directory, 'С ЛОГО')
     try:
         os.mkdir(result_path)
     except OSError as error:
         print(error)
-
-    onlyfiles = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
 
     watermark = Image.open(watermark_filename)
     watermark.load()
@@ -56,7 +68,8 @@ def process_images(directory, watermark_filename, dpi, quality):
 
                 result_filename = os.path.join(result_path, filename)
                 image.save(result_filename, dpi=(dpi, dpi), quality=quality)
-
+                progress_bar.update(1)
+    progress_bar.close()
     print("--- %s seconds ---" % (time.time() - start_time))
 
 
