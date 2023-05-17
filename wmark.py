@@ -7,7 +7,6 @@ from pathlib import Path
 from tqdm import tqdm
 
 
-
 def get_image_orientation_tag(image):
     try:
         exif_data = image.getexif()
@@ -35,7 +34,7 @@ def process_images(directory, watermark_filename, dpi, quality):
 
     progress_bar = tqdm(total=len(onlyfiles))
 
-    result_path = os.path.join(directory, 'С ЛОГО')
+    result_path = os.path.join(directory, 'С ЛОГОТИПОМ')
     try:
         os.mkdir(result_path)
     except OSError as error:
@@ -46,39 +45,31 @@ def process_images(directory, watermark_filename, dpi, quality):
 
     for filename in onlyfiles:
         file_path = Path(directory) / filename
-        if file_path.suffix.lower() in ['.jpg', '.jpeg', '.png']:
-            with Image.open(file_path) as image:
-                image.load()
-
-                # Get image orientation
-                orientation_tag = get_image_orientation_tag(image)
-                if orientation_tag in [3, 6, 8]:
-                    image = image.transpose(Image.ROTATE_270 if orientation_tag == 8 else Image.ROTATE_90)
-                    fixed_width = int(image.width * 0.5)
-                else:
-                    fixed_width = int(image.width * 0.3)
-
-                height_size = int(fixed_width / watermark.width * watermark.height)
-                resized_watermark = watermark.resize((fixed_width, height_size))
-
-                xpos = int(image.width - resized_watermark.width - 0.03 * image.width)
-                ypos = int(image.height - resized_watermark.height - 0.03 * image.width)
-
-                image.paste(resized_watermark, (xpos, ypos), resized_watermark)
-
-                result_filename = os.path.join(result_path, filename)
-                image.save(result_filename, dpi=(dpi, dpi), quality=quality)
-                progress_bar.update(1)
+        with Image.open(file_path) as image:
+            image.load()
+            # Get image orientation
+            orientation_tag = get_image_orientation_tag(image)
+            if orientation_tag == 8:
+                image = image.transpose(Image.ROTATE_90)
+            fixed_width = int(image.width * 0.3)
+            height_size = int(fixed_width / watermark.width * watermark.height)
+            resized_watermark = watermark.resize((fixed_width, height_size))
+            xpos = int(image.width - resized_watermark.width - 0.02 * image.width)
+            ypos = int(image.height - resized_watermark.height - 0.02 * image.width)
+            image.paste(resized_watermark, (xpos, ypos), resized_watermark)
+            image.save(os.path.join(result_path, filename), dpi=(dpi, dpi), quality=quality)
+            progress_bar.update(1)
     progress_bar.close()
     print("--- %s seconds ---" % (time.time() - start_time))
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Описание скрипта')
+    parser = argparse.ArgumentParser(description='Этот скрипт выполняет обработку изображений'
+                                     'с применением водяных знаков.')
 
     parser.add_argument('-p', '--path', type=str, default=os.getcwd(),
                         help='Название папки (по умолчанию - текущая директория)')
-    parser.add_argument('-w', '--watermark', type=str, default='nsh',
+    parser.add_argument('-w', '--watermark', type=str, default='default',
                         help='Сокращение для выбора водяного знака (nsh - nsh_mark.png, eco - eco_mark.png)')
     parser.add_argument('-q', '--quality', type=int, default=95,
                         help='Качество сохранения изображений (от 1 до 95 или 100)')

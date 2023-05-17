@@ -2,6 +2,7 @@
 build/
 dist/
 venv/
-С ЛОГО/
+С ЛОГОТИПОМ/
 wmark.spec
 .fleet/
+install/

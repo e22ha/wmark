@@ -1,4 +1,5 @@
 {
+    "default": "wmarks\\nsh_mark.png",
     "nsh": "wmarks\\nsh_mark.png",
     "eco": "wmarks\\eco_mark.png"
   }  
