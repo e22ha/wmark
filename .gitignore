@@ -6,3 +6,4 @@ venv/
 wmark.spec
 .fleet/
 install/
+.DS_Store
